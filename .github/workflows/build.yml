@@ -1,0 +1,97 @@
+# Basic workflow
+name: build
+
+# Controls when the action will run
+# Workflow begins with push or PR events
+# Focuses on the master branch only
+on:
+  push:
+    branches: [ master, feat/hyper_param, feat/neural_net ]
+  pull_request:
+    branches: [ master ]
+
+# Create one single job
+# This job performs all necessary checks
+jobs:
+  build:
+    # Use the latest version of Ubuntu on Microsoft Azure
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # Performs all actions on different versions of Python
+        python-version: [3.10]
+    # Define the workflow steps
+    steps:
+    # Checkout the code of the repository
+        - name: Check out Repository Code
+          uses: actions/checkout@v2
+          with:
+            fetch-depth: 0
+        # Run the mdl linting tool
+        # Refers to .mdlrc file in repository
+        - name: Run Markdown Linting
+          uses: actionshub/markdownlint@master
+        # Setup Python for the current language version
+        - name: Setup Python ${{ matrix.python-version }}
+          uses: actions/setup-python@v1
+          with:
+            python-version: ${{ matrix.python-version }}
+        # Install pip
+        - name: Install Pip
+          run: |
+            pip install -U pip
+        # Install pipenv
+        - name: Install Pipenv
+          run: |
+            pip install pipenv
+        # Install poetry
+        - name: Install Poetry
+          uses: abatilo/actions-poetry@v2.0.0
+          with:
+            poetry-version: 1.2.0
+        # Run the Python program
+        - name: Run Python Programs
+          if: always()
+          run: |
+            cd hyper_param
+            poetry install
+            poetry run python hyper_param
+            cd ..
+            cd neural_net
+            poetry install poetry run python mlp
+        # Run the pytest test suite
+        - name: Run Pytest Test Suite
+          if: always()
+          run: |
+            cd hyper_param
+            poetry run pytest
+            cd ..
+            cd neural_net
+            poetry run pytest
+        # Run the black code formatter in checking mode
+        - name: Run Black Code Formatter
+          if: always()
+          run: |
+            cd hyper_param
+            poetry run black hyper_param tests --check
+            cd ..
+            cd neural_net
+            poetry run black neural_net tests --check
+        # Run the pylint linting tool
+        - name: Run Pylint Linting Tool
+          if: always()
+          run: |
+            cd hyper_param
+            poetry run pylint hyper_param tests
+            cd ..
+            cd neural_net
+            poetry run pylint neural_net tests
+        # Run the flake8 linting tool
+        - name: Run Flake8 Linting Tool
+          if: always()
+          run: |
+            cd hyper_param
+            poetry run flake8 hyper_param tests
+            cd ..
+            cd neural_net
+            poetry run flake8 neural_net tests
