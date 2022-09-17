@@ -17,20 +17,26 @@ import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
 
-DEVICE = torch.device('cpu')
-BATCHSIZE = 128
+DEVICE = torch.device("cpu")
+BATCHSIZE = 200
 CLASSES = 2
 EPOCHS = 50
 N_TRAIN_EXAMPLES = BATCHSIZE * 30
 N_VALID_EXAMPLES = BATCHSIZE * 10
 
+
 class StockDataset(Dataset):
+    """Build the dataset based on a csv file of stock data."""
 
     def __init__(self):
-        xy = np.loadtxt('./data/BRITANNIA.csv', delimiter=",", dtype=np.float32, skiprows=1)
+        xy = np.loadtxt(
+            "./data/BRITANNIA.csv", delimiter=",", dtype=np.float32, skiprows=1
+        )
         closing_price = xy[:, [0, 5]]
         self.x = torch.from_numpy(xy[:, [0, 6, 7, 8, 9, 10]])
-        self.y = torch.from_numpy(np.less(closing_price[:, 0], closing_price[:, 1])).type(torch.LongTensor)
+        self.y = torch.from_numpy(
+            np.less(closing_price[:, 0], closing_price[:, 1])
+        ).type(torch.LongTensor)
         self.n_samples = xy.shape[0]
 
     def __getitem__(self, index):
@@ -39,15 +45,17 @@ class StockDataset(Dataset):
     def __len__(self):
         return self.n_samples
 
+
 def get_stock_data():
-    # Load stock dataset.
-    train_loader = DataLoader(StockDataset(), batch_size=BATCHSIZE,shuffle=True)
-    valid_loader = DataLoader(StockDataset(), batch_size=BATCHSIZE,shuffle=True)
+    """Load stock dataset in a DataLoader so that the neural networks are trained based on batches of data."""
+    train_loader = DataLoader(StockDataset(), batch_size=BATCHSIZE, shuffle=True)
+    valid_loader = DataLoader(StockDataset(), batch_size=BATCHSIZE, shuffle=True)
 
     return train_loader, valid_loader
 
+
 def define_model(trial):
-    # We optimize the number of layers, hidden units and dropout ratio in each layer.
+    """Construct the model while optimizing the number of layers, hidden units and dropout ratio in each layer."""
     n_layers = trial.suggest_int("n_layers", 1, 5)
     layers = []
 
@@ -68,6 +76,7 @@ def define_model(trial):
 
 
 def objective(trial):
+    """Simulate the neural networks and evaluate them."""
 
     # Generate the model.
     model = define_model(trial).to(DEVICE)
@@ -141,3 +150,6 @@ if __name__ == "__main__":
     print("  Params: ")
     for key, value in trial.params.items():
         print("    {}: {}".format(key, value))
+
+    fig = optuna.visualization.plot_param_importances(study)
+    fig.show()
