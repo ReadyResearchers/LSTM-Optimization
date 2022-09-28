@@ -56,17 +56,11 @@ jobs:
             cd hyper_param
             poetry install
             poetry run python hyper_param
-            cd ..
-            cd neural_net
-            poetry install poetry run python mlp
         # Run the pytest test suite
         - name: Run Pytest Test Suite
           if: always()
           run: |
             cd hyper_param
-            poetry run pytest
-            cd ..
-            cd neural_net
             poetry run pytest
         # Run the black code formatter in checking mode
         - name: Run Black Code Formatter
@@ -74,24 +68,15 @@ jobs:
           run: |
             cd hyper_param
             poetry run black hyper_param tests --check
-            cd ..
-            cd neural_net
-            poetry run black neural_net tests --check
         # Run the pylint linting tool
         - name: Run Pylint Linting Tool
           if: always()
           run: |
             cd hyper_param
             poetry run pylint hyper_param tests
-            cd ..
-            cd neural_net
-            poetry run pylint neural_net tests
         # Run the flake8 linting tool
         - name: Run Flake8 Linting Tool
           if: always()
           run: |
             cd hyper_param
             poetry run flake8 hyper_param tests
-            cd ..
-            cd neural_net
-            poetry run flake8 neural_net tests
