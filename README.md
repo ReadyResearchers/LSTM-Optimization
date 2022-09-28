@@ -30,7 +30,7 @@ The number of layers and the number of neurons in each layer are decided by the
 `suggest_int` function, which picks a hyperparameter and then chooses the value of
 that hyperparameter based on potential.
 
-The optimizer is another hyperparameter which value is chosen through the 
+The optimizer is another hyperparameter which value is chosen through the
 `suggest_categorical` function.
 
 Then the actual data comes in. This is done through a `DataLoader`, which divides
