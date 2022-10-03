@@ -10,6 +10,7 @@ optuna = "^3.0.2"
 torch = "^1.12.1"
 numpy = "^1.23.3"
 plotly = "^5.10.0"
+pandas = "^1.5.0"
 sklearn = "^0.0"
 
 [tool.poetry.dev-dependencies]
