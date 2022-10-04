@@ -49,6 +49,24 @@ trial early and going to the next one.
 Once all of the trials are ran, the most optimal trial is displayed, with the
 accuracy and the hyperparameters that are chosen for that trial.
 
+## Installation and Setup
+
+### Python
+
+You'll need to have Python 3.10 or later for this program to work on your machine. If you haven't installed it yet,
+visit the [official website](https://www.python.org) and make sure to add the path of the Python binary to the environment so that it's recognized.
+
+### Poetry
+
+Once Python is installed, you'll need to also install Poetry, which is a Python tool that will hold and manage all of the
+packages that are needed for this artifact. All of the information needed to install Poetry in your system is in [this link]
+(https://python-poetry.org/docs/).
+
+### Setup
+
+Once Poetry is installed, you're now able to run the program by first entering `poetry install` in the `hyper_param`
+directory to install the packages and then entering `poetry run python hyper_param` to run the program itself.
+
 ## Related Works
 
 [Neural Networks for COVID Projections](https://www.sciencedirect.com/science/article/pii/S2772662221000060)
