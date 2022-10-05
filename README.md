@@ -62,10 +62,10 @@ it's recognized.
 
 ### Poetry
 
-Once Python is installed, you'll need to also install Poetry, which is a Python tool that
-will hold and manage all of the packages that are needed for this artifact. All of the
-information needed to install Poetry in your system is in
-[this link](https://python-poetry.org/docs/).
+Once Python is installed, you'll need to also install Poetry, which is a
+Python tool that will hold and manage all of the packages that are needed
+for this artifact. All of the information needed to install Poetry in
+your system is in [this link](https://python-poetry.org/docs/).
 
 ### Setup
 
