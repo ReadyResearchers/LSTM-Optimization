@@ -1,5 +1,7 @@
 # MLP-Optimization
 
+![build](https://github.com/ReadyResearchers/MLP-Optimization/actions/workflows/build.yml/badge.svg)
+
 ## Introduction
 
 For my research project, I'll intend to use neural networks to perform predictive
