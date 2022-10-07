@@ -54,7 +54,7 @@ class TempDataset(Dataset):
     """Build the dataset based on a csv file of temperature data."""
 
     def __init__(self):
-        xy = pd.read_csv("../data/city_temperature.csv", dtype=str)
+        xy = pd.read_csv("./data/city_temperature.csv", dtype=str)
         xy[["Region", "Country", "City"]] = xy[["Region", "Country", "City"]].apply(
             LabelEncoder().fit_transform
         )
@@ -86,6 +86,7 @@ def get_stock_data():
 
 
 def get_temp_data():
+    """Load temperature dataset in a DataLoader so that the neural networks are trained based on batches of data."""
     train_loader = DataLoader(TempDataset(), batch_size=BATCHSIZE, shuffle=True)
     valid_loader = DataLoader(TempDataset(), batch_size=BATCHSIZE, shuffle=True)
 
@@ -188,7 +189,7 @@ def objective(trial):
 
 if __name__ == "__main__":
     study = optuna.create_study(direction="maximize")
-    study.optimize(objective, n_trials=500, timeout=600)
+    study.optimize(objective, n_trials=100, timeout=600)
 
     pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
     complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
