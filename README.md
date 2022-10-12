@@ -1,5 +1,6 @@
 # MLP-Optimization
 
+![logo](images/MLP-OP-logos_transparent.png)
 ![build](https://github.com/ReadyResearchers/MLP-Optimization/actions/workflows/build.yml/badge.svg)
 
 ## Introduction
