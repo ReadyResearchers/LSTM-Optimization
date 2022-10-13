@@ -82,6 +82,8 @@ and then entering `poetry run python hyper_param` to run the program itself.
 
 [Prediction of RUL of Equipment in Production Lines using ANN](https://www.mdpi.com/1424-8220/21/3/932)
 
+[Time Series Forecasting Models](https://otexts.com/fpp2/data-methods.html)
+
 ## Future Endeavors
 
 Try out new datasets.
