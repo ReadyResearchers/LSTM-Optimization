@@ -1,5 +1,6 @@
 # MLP-Optimization
 
+![logo](images/MLP-OP-logos_transparent.png)
 ![build](https://github.com/ReadyResearchers/MLP-Optimization/actions/workflows/build.yml/badge.svg)
 
 ## Introduction
@@ -80,6 +81,8 @@ and then entering `poetry run python hyper_param` to run the program itself.
 [Neural Network Parameter Optimization](https://www.sciencedirect.com/science/article/abs/pii/S0925231215020184?casa_token=RXOg711Fbs0AAAAA:KJsnEcjVitIX6KTRR0W88cmcuomo1-oGHGbZpk4jlphHwuk7SNpg48bX0zwLw9THn9Ibv0R9UQ)
 
 [Prediction of RUL of Equipment in Production Lines using ANN](https://www.mdpi.com/1424-8220/21/3/932)
+
+[Time Series Forecasting Models](https://otexts.com/fpp2/data-methods.html)
 
 ## Future Endeavors
 
