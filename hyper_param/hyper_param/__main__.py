@@ -54,7 +54,7 @@ class TempDataset(Dataset):
     """Build the dataset based on a csv file of temperature data."""
 
     def __init__(self):
-        xy = pd.read_csv("./data/city_temperature.csv", dtype=str)
+        xy = pd.read_csv("./data/city_temperature_compressed.csv", dtype=str)
         xy[["Region", "Country", "City"]] = xy[["Region", "Country", "City"]].apply(
             LabelEncoder().fit_transform
         )
