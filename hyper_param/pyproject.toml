@@ -7,7 +7,7 @@ authors = ["Kobe Coleman <colemank@allegheny.edu>"]
 [tool.poetry.dependencies]
 python = ">=3.10, <3.11"
 optuna = "^3.0.2"
-torch = "^1.12.1"
+torch = "<1.13"
 numpy = "^1.23.3"
 plotly = "^5.10.0"
 pandas = "^1.5.0"
