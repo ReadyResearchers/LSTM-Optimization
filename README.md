@@ -3,6 +3,11 @@
 ![logo](images/MLP-OP-logos_transparent.png)
 ![build](https://github.com/ReadyResearchers/MLP-Optimization/actions/workflows/build.yml/badge.svg)
 
+## Title
+
+Digital Prophet: Predictive Analytics of Time Series Datasets
+Using Hyperparameter Optimization
+
 ## Introduction
 
 For my research project, I'll intend to use neural networks to perform predictive
@@ -11,6 +16,8 @@ optimization on neural networks that are made based on the dataset being analyze
 and the interpretation objective. The goal is to find trends of the most optimal
 hyperparameters based on variations in the properties of data and the
 interpretation objective.
+
+## Abstract
 
 ## Technical Details
 
