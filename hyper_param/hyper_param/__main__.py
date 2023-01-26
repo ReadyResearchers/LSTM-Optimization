@@ -17,58 +17,75 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
-import numpy as np
+import math
 import pandas as pd
-from sklearn.preprocessing import LabelEncoder
+from plotly.subplots import make_subplots
+import plotly.graph_objs as go
+import sys
 
 DEVICE = torch.device("cpu")
 BATCHSIZE = 200
-CLASSES = 2
+CLASSES = 1
 EPOCHS = 50
 N_TRAIN_EXAMPLES = BATCHSIZE * 30
 N_VALID_EXAMPLES = BATCHSIZE * 10
 
 
-class StockDataset(Dataset):
-    """Build the dataset based on a csv file of stock data."""
+class Dataset(Dataset):
+    """Build the dataset based on a csv file of data."""
 
     def __init__(self):
-        xy = np.loadtxt(
-            "./data/BRITANNIA.csv", delimiter=",", dtype=np.float32, skiprows=1
-        )
-        closing_price = xy[:, [0, 5]]
-        self.x = torch.from_numpy(xy[:, [0, 6, 7, 8, 9, 10]])
-        self.y = torch.from_numpy(
-            np.less(closing_price[:, 0], closing_price[:, 1])
-        ).type(torch.LongTensor)
-        self.n_samples = xy.shape[0]
+        orig_df = pd.read_csv(sys.argv[1])
+        input_keys = map(str, sys.argv[2].strip('[]').split(','))
+        output_keys = map(str, sys.argv[3].strip('[]').split(','))
+        input_df = orig_df[input_keys]
+        output_df = orig_df[output_keys]
 
-    def __getitem__(self, index):
-        return self.x[index], self.y[index]
+        num_plots = input_df.shape[1] + output_df.shape[1]
+        plot_rows = num_plots
+        plot_cols = 1
 
-    def __len__(self):
-        return self.n_samples
+        while plot_rows > 10:
+            plot_cols += 1
+            plot_rows = math.ceil(num_plots / plot_cols)
 
+        fig = make_subplots(rows=plot_rows, cols=plot_cols)
 
-class TempDataset(Dataset):
-    """Build the dataset based on a csv file of temperature data."""
+        x = 0
+        i = 1
+        j = 1
 
-    def __init__(self):
-        xy = pd.read_csv("./data/city_temperature_compressed.csv", dtype=str)
-        xy[["Region", "Country", "City"]] = xy[["Region", "Country", "City"]].apply(
-            LabelEncoder().fit_transform
-        )
-        self.x = (
-            xy.loc[:, ["Region", "Country", "City", "Month", "Day"]]
-            .to_numpy(dtype="float32")
-            .astype(np.float32)
-        )
-        self.y = (
-            xy.loc[:, ["AvgTemperature"]].to_numpy(dtype="float32").astype(np.int32)
-        )
-        self.x = torch.from_numpy(self.x)
-        self.y = torch.from_numpy(self.y)
-        self.n_samples = xy.shape[0]
+        while x < input_df.shape[1]:
+            fig.add_trace(go.Scatter(x=input_df.index, y=input_df[input_df.columns[x]].values,
+                                     name=input_df.columns[x],
+                                     mode='lines'),
+                          row=i,
+                          col=j)
+            x += 1
+            j += 1
+            if j > plot_cols:
+                j = 1
+                i += 1
+
+        x = 0
+        while x < output_df.shape[1]:
+            fig.add_trace(go.Scatter(x=output_df.index, y=output_df[output_df.columns[x]].values,
+                                     name=output_df.columns[x],
+                                     mode='lines'),
+                          row=i,
+                          col=j)
+            x += 1
+            j += 1
+            if j > plot_cols:
+                j = 0
+                i += 1
+
+        fig.update_layout(height=1200, width=1200)
+        fig.show()
+
+        self.x = torch.from_numpy(input_df.to_numpy())
+        self.y = torch.from_numpy(output_df.to_numpy())
+        self.n_samples = input_df.shape[0]
 
     def __getitem__(self, index):
         return self.x[index], self.y[index]
@@ -78,17 +95,9 @@ class TempDataset(Dataset):
 
 
 def get_stock_data():
-    """Load stock dataset in a DataLoader so that the neural networks are trained based on batches of data."""
-    train_loader = DataLoader(StockDataset(), batch_size=BATCHSIZE, shuffle=True)
-    valid_loader = DataLoader(StockDataset(), batch_size=BATCHSIZE, shuffle=True)
-
-    return train_loader, valid_loader
-
-
-def get_temp_data():
-    """Load temperature dataset in a DataLoader so that the neural networks are trained based on batches of data."""
-    train_loader = DataLoader(TempDataset(), batch_size=BATCHSIZE, shuffle=True)
-    valid_loader = DataLoader(TempDataset(), batch_size=BATCHSIZE, shuffle=True)
+    """Load stock dataset in a DataLoader and visualize the data being collected."""
+    train_loader = DataLoader(Dataset(), batch_size=BATCHSIZE, shuffle=True)
+    valid_loader = DataLoader(Dataset(), batch_size=BATCHSIZE, shuffle=True)
 
     return train_loader, valid_loader
 
@@ -154,17 +163,17 @@ def objective(trial):
             data, target = data.view(data.size(0), -1).to(DEVICE), target.to(DEVICE)
 
             optimizer.zero_grad()
-            output = model(data)
+            output = torch.flatten(model(data))
             target = torch.flatten(target.type(torch.LongTensor))
-            loss = F.nll_loss(
-                torch.nn.functional.relu(output), torch.nn.functional.relu(target)
+            loss = F.mse_loss(
+                torch.nn.functional.relu(output).float(), torch.nn.functional.relu(target).float()
             )
             loss.backward()
             optimizer.step()
 
         # Validation of the model.
         model.eval()
-        correct = 0
+        sqerror = 0
         with torch.no_grad():
             for batch_idx, (data, target) in enumerate(valid_loader):
                 # Limiting validation data.
@@ -172,24 +181,22 @@ def objective(trial):
                     break
                 data, target = data.view(data.size(0), -1).to(DEVICE), target.to(DEVICE)
                 output = model(data)
-                # Get the index of the max log-probability.
-                pred = output.argmax(dim=1, keepdim=True)
-                correct += pred.eq(target.view_as(pred)).sum().item()
+                sqerror += torch.sum(torch.square(torch.sub(output, target)))
 
-        accuracy = correct / min(len(valid_loader.dataset), N_VALID_EXAMPLES)
+        rmse = (sqerror / min(len(valid_loader.dataset), N_VALID_EXAMPLES)) ** (0.5)
 
-        trial.report(accuracy, epoch)
+        trial.report(rmse, epoch)
 
         # Handle pruning based on the intermediate value.
         if trial.should_prune():
             raise optuna.exceptions.TrialPruned()
 
-    return accuracy
+    return rmse
 
 
 if __name__ == "__main__":
-    study = optuna.create_study(direction="maximize")
-    study.optimize(objective, n_trials=100, timeout=600)
+    study = optuna.create_study(direction="minimize")
+    study.optimize(objective, n_trials=10000, timeout=10000)
 
     pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
     complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
