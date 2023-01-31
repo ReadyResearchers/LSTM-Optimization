@@ -21,6 +21,7 @@ import math
 import pandas as pd
 from plotly.subplots import make_subplots
 import plotly.graph_objs as go
+from sklearn.preprocessing import RobustScaler, MinMaxScaler
 import sys
 
 DEVICE = torch.device("cpu")
@@ -37,9 +38,9 @@ class Dataset(Dataset):
     def __init__(self):
         orig_df = pd.read_csv(sys.argv[1])
         input_keys = map(str, sys.argv[2].strip('[]').split(','))
-        output_keys = map(str, sys.argv[3].strip('[]').split(','))
+        output_key = map(str, sys.argv[3].strip('[]').split(','))
         input_df = orig_df[input_keys]
-        output_df = orig_df[output_keys]
+        output_df = orig_df[output_key]
 
         num_plots = input_df.shape[1] + output_df.shape[1]
         plot_rows = num_plots
@@ -68,23 +69,25 @@ class Dataset(Dataset):
                 i += 1
 
         x = 0
-        while x < output_df.shape[1]:
-            fig.add_trace(go.Scatter(x=output_df.index, y=output_df[output_df.columns[x]].values,
-                                     name=output_df.columns[x],
-                                     mode='lines'),
-                          row=i,
-                          col=j)
-            x += 1
-            j += 1
-            if j > plot_cols:
-                j = 0
-                i += 1
+
+        fig.add_trace(go.Scatter(x=output_df.index, y=output_df[output_df.columns[x]].values,
+                                 name=output_df.columns[x],
+                                 mode='lines'),
+                      row=i,
+                      col=j)
 
         fig.update_layout(height=1200, width=1200)
         fig.show()
 
-        self.x = torch.from_numpy(input_df.to_numpy())
-        self.y = torch.from_numpy(output_df.to_numpy())
+        input_np_unscaled = input_df.to_numpy()
+        output_np_unscaled = output_df.to_numpy().reshape(-1, 1)
+
+        scaler_train = MinMaxScaler()
+        input_np_scaled = scaler_train.fit_transform(input_np_unscaled)
+        output_np_scaled = scaler_train.fit_transform(output_np_unscaled)
+
+        self.x = torch.from_numpy(input_np_scaled)
+        self.y = torch.from_numpy(output_np_scaled)
         self.n_samples = input_df.shape[0]
 
     def __getitem__(self, index):
@@ -94,10 +97,10 @@ class Dataset(Dataset):
         return self.n_samples
 
 
-def get_stock_data():
+def extract_data():
     """Load stock dataset in a DataLoader and visualize the data being collected."""
-    train_loader = DataLoader(Dataset(), batch_size=BATCHSIZE, shuffle=True)
-    valid_loader = DataLoader(Dataset(), batch_size=BATCHSIZE, shuffle=True)
+    train_loader = DataLoader(Dataset(), batch_size=BATCHSIZE)
+    valid_loader = DataLoader(Dataset(), batch_size=BATCHSIZE)
 
     return train_loader, valid_loader
 
@@ -149,8 +152,8 @@ def objective(trial):
     lr = trial.suggest_float("lr", 1e-5, 1, log=True)
     optimizer = getattr(optim, optimizer_name)(model.parameters(), lr=lr)
 
-    # Get the stock dataset.
-    train_loader, valid_loader = get_stock_data()
+    # Get the dataset.
+    train_loader, valid_loader = extract_data()
 
     # Training of the model.
     for epoch in range(EPOCHS):
