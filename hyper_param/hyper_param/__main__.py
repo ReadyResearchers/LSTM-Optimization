@@ -1,9 +1,9 @@
 """
-Optuna example that optimizes multi-layer perceptrons using PyTorch.
-In this example, we optimize the validation accuracy of a stock called Britannica using
+Optuna example that optimizes LSTM using PyTorch.
+In this example, we optimize the projection accuracy of a stock called Britannica using
 PyTorch and a csv file containing the stock data. We optimize the neural network architecture as well as the optimizer
 configuration. As it is too time-consuming to use the whole file,
-we here use a small subset of it.
+we here use one small batch of it at a time.
 
 Source Code Credit: https://github.com/optuna/optuna-examples/blob/main/pytorch/pytorch_simple.py
 Stock Market Data Credit: https://www.kaggle.com/code/jagannathrk/stock-market-time-series/data?select=BRITANNIA.csv
@@ -11,10 +11,10 @@ Temperature Data Credit: https://www.kaggle.com/datasets/sudalairajkumar/daily-t
 """
 
 import optuna
+import optuna.visualization as vis
 from optuna.trial import TrialState
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 import math
@@ -24,8 +24,10 @@ from plotly.subplots import make_subplots
 import plotly.graph_objs as go
 import sys
 
-DEVICE = torch.device("cpu")
-EPOCHS = 3
+# For performance reasons, if using the cpu, lower the number of epochs
+# And if using the gpu, raise the number of epochs
+DEVICE = torch.device("cuda")
+EPOCHS = 10
 
 
 class Dataset(Dataset):
@@ -69,16 +71,18 @@ class Dataset(Dataset):
         # Initialize the fields in the Dataset object
         self.x = final_input
         self.y = final_output
-        self.n_samples = self.input_df.shape[0]
+        self.n_samples = len(final_input)
 
     def __getitem__(self, index):
+        """Return the item based on the index."""
         return self.x[index], self.y[index]
 
     def __len__(self):
+        """Return the quantity of data points."""
         return self.n_samples
 
     def visualize(self):
-        """Display the collected data"""
+        """Display the collected data."""
         input_df = self.input_df
         output_df = self.output_df
 
@@ -132,7 +136,7 @@ class Dataset(Dataset):
 def extract_data(trial):
     """Load the dataset to a DataLoader and visualize the data being collected."""
     # Suggest a batch size
-    batch_size = trial.suggest_int('batch_size', 20, 200)
+    batch_size = trial.suggest_int('batch_size', 20, 400)
 
     # Two data loaders are created; one for training and the other for evaluation
     train_loader = DataLoader(data, batch_size=batch_size)
@@ -144,7 +148,7 @@ def extract_data(trial):
 def define_model(trial):
     """Construct the model while optimizing the number of layers, hidden units and dropout ratio."""
     # Configurations for the model, some of them suggested and others from CLI arguments
-    n_layers = trial.suggest_int('n_layers', 2, 40)
+    n_layers = trial.suggest_int('n_layers', 2, 10)
     input_size = len(sys.argv[2].split(','))
     proj_size = int(sys.argv[5])
     dropout = trial.suggest_float('dropout', 0.2, 0.5)
@@ -183,23 +187,24 @@ def objective(trial):
 
     # Get the dataset and batch size.
     train_loader, valid_loader, batch_size = extract_data(trial)
+    test_batches = trial.suggest_int('test_batches', 1, 10)
 
     # Training of the model.
     for epoch in range(EPOCHS):
 
         # Put the model in training mode
         model.train()
+        num_train_batches = len(train_loader.dataset) // batch_size - test_batches
 
         # Iteratively take batches of data and put them into the model
         for batch_idx, (x, y) in enumerate(train_loader):
-
-            # If there are more than 10 batches or the index in the next batch after this iteration goes out of bounds
-            # Exit the loop
-            if batch_idx >= 10 or batch_size * (batch_idx + 2) >= len(train_loader.dataset):
+            # Leave data for the validation process
+            if batch_idx == num_train_batches:
                 break
 
-            # Convert the input tensor to a float
+            # Convert the input and output tensors to have float values
             x = x.to(DEVICE).float()
+            y = y.to(DEVICE).float()
 
             # Min-max scaling
             x = (x - x.min()) / (x.max() - x.min())
@@ -214,49 +219,53 @@ def objective(trial):
 
             # Calculate the loss
             optimizer.zero_grad()
-            loss = F.mse_loss(
-                torch.nn.functional.relu(output).float(), torch.nn.functional.relu(y).float()
-            )
+            loss_fn = nn.MSELoss()
+            loss = loss_fn(output, y)
             loss.backward()
             optimizer.step()
 
         # Put the model in validation mode
         model.eval()
+        eval_entries = 0
         sqerror = 0
         with torch.no_grad():
 
             # Iteratively take batches of data and put them into the model
             for batch_idx, (x, y) in enumerate(valid_loader):
+                # This condition is made so the evaluation is only made on untrained data.
+                if batch_idx >= num_train_batches:
+                    eval_entries += batch_size
 
-                # If there are more than 5 batches or the index in the next batch after this iteration goes out of
-                # bounds, exit the loop
-                if batch_idx >= 5 or (batch_idx + 2) * batch_size >= len(valid_loader.dataset):
-                    break
+                    # Convert the input tensor to a float
+                    x = x.to(DEVICE).float()
+                    y = y.to(DEVICE).float()
 
-                # Convert the input tensor to a float
-                x = x.to(DEVICE).float()
+                    # Output from LSTM is the format of Tuple[Tensor, Tuple[Tensor, Tensor]]
+                    # The Tensor inside the inner Tuple is chosen because it only has the hidden values from the last
+                    # time step, which holds the projections
+                    output = model(x)[1][0]
 
-                # Output from LSTM is the format of Tuple[Tensor, Tuple[Tensor, Tensor]]
-                # The Tensor inside the inner Tuple is chosen because it only has the hidden values from the last
-                # time step, which holds the projections
-                output = model(x)[1][0]
+                    # Match the shape of the output from the model to the shape of the targets
+                    y = y.unsqueeze(0).expand(output.shape[0], y.shape[0], y.shape[1]).to(DEVICE)
 
-                # Match the shape of the output from the model to the shape of the targets
-                y = y.unsqueeze(0).expand(output.shape[0], y.shape[0], y.shape[1]).to(DEVICE)
+                    # Add the error
+                    loss_fn = nn.MSELoss()
+                    sqerror += loss_fn(output, y)
 
-                # Add the error
-                sqerror += torch.sum(torch.square(torch.sub(output, y)))
+                    # If the index in the next batch after this iteration goes out of bounds, exit the loop
+                    if (batch_idx + 2) * batch_size >= len(valid_loader.dataset):
+                        break
 
-        # Compute the RMSE which will be the value the study minimizes through different suggestions of hyperparameters
-        rmse = (sqerror / min(len(valid_loader.dataset), batch_size * 10)) ** (0.5)
+        # Compute the MSE which will be the value the study minimizes through different suggestions of hyperparameters
+        mse = sqerror / eval_entries
 
-        trial.report(rmse, epoch)
+        trial.report(mse, epoch)
 
         # Handle pruning based on the intermediate value.
         if trial.should_prune():
             raise optuna.exceptions.TrialPruned()
 
-    return rmse
+    return mse
 
 
 if __name__ == "__main__":
@@ -264,9 +273,9 @@ if __name__ == "__main__":
     data = Dataset()
     data.visualize()
 
-    # Activation of the study, aiming to minimize RMSE
+    # Activation of the study, aiming to minimize AMSE
     study = optuna.create_study(direction="minimize")
-    study.optimize(objective, n_trials=10000, timeout=1000)
+    study.optimize(objective, n_trials=10000, timeout=120)
 
     # Evaluation of the study
     pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
@@ -287,5 +296,5 @@ if __name__ == "__main__":
         print("    {}: {}".format(key, value))
 
     # Visualization
-    fig = optuna.visualization.plot_param_importances(study)
-    fig.show()
+    vis.plot_param_importances(study).show()
+    vis.plot_contour(study).show()
