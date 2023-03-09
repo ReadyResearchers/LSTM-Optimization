@@ -37,6 +37,7 @@ class Dataset(Dataset):
 
         # Create pandas dataframes from a csv file and set up the input and output dataframes based on CLI arguments
         orig_df = pd.read_csv(sys.argv[1])
+        print(sys.argv[1])
         print(orig_df.columns)
         input_keys = map(str, sys.argv[2].strip("[]").split(","))
         output_key = map(str, sys.argv[3].strip("[]").split(","))
@@ -239,7 +240,7 @@ if __name__ == "__main__":
 
     # Activation of the study, aiming to minimize MSE
     study = optuna.create_study(direction="minimize")
-    study.optimize(objective, n_trials=int(sys.argv[6]))
+    study.optimize(objective, n_trials=int(sys.argv[6]), timeout=30)
 
     with open("experiment/best_values.pickle", "wb") as f:
         # Use pickle to dump the dictionary of the trial into the file
