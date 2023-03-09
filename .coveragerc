@@ -1,5 +1,5 @@
 [run]
 include=
-    hyper_param/hyper_param/lstm.py
-    hyper_param/experiment/__main__.py
+    hyper_param/lstm.py
+    experiment/__main__.py
 
