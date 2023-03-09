@@ -1,5 +1,5 @@
 """
-Optuna example that optimizes LSTM using PyTorch.
+Optuna example that optimizes LSTM hyperparameters using PyTorch.
 In this example, we optimize the projection accuracy of a stock called Britannica using
 PyTorch and a csv file containing the stock data. We optimize the neural network architecture as well as the optimizer
 configuration. As it is too time-consuming to use the whole file,
@@ -11,24 +11,18 @@ Temperature Data Credit: https://www.kaggle.com/datasets/sudalairajkumar/daily-t
 """
 
 import optuna
-import optuna.visualization as vis
-from optuna.trial import TrialState
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
-import math
 import numpy as np
 import pandas as pd
-from plotly.subplots import make_subplots
-import plotly.graph_objs as go
+import pickle
 import sys
 
 # For performance reasons, if using the cpu, lower the number of epochs
 # And if using the gpu, raise the number of epochs
 DEVICE = torch.device("cuda")
-EPOCHS = 10
-
 
 class Dataset(Dataset):
     """Build the dataset based on a csv file of data."""
@@ -81,62 +75,11 @@ class Dataset(Dataset):
         """Return the quantity of data points."""
         return self.n_samples
 
-    def visualize(self):
-        """Display the collected data."""
-        input_df = self.input_df
-        output_df = self.output_df
-
-        # Determine how many plots to make
-        num_plots = input_df.shape[1] + output_df.shape[1]
-
-        # Determine how many rows and columns are needed for the amount of plots
-        plot_rows = num_plots
-        plot_cols = 1
-
-        # If there are many rows, have multiple columns so all the plots fit
-        while plot_rows > 10:
-            plot_cols += 1
-            plot_rows = math.ceil(num_plots / plot_cols)
-
-        # Set up the container of the plots with the number of rows and columns
-        data_fig = make_subplots(rows=plot_rows, cols=plot_cols)
-
-        # Add the plots of each individual input and output column to the container.
-        # Locations of these plots have to be manually specified
-        x = 0
-        i = 1
-        j = 1
-
-        while x < input_df.shape[1]:
-            data_fig.add_trace(go.Scatter(x=input_df.index, y=input_df[input_df.columns[x]].values,
-                                          name=input_df.columns[x],
-                                          mode='lines'),
-                               row=i,
-                               col=j)
-            x += 1
-            j += 1
-            if j > plot_cols:
-                j = 1
-                i += 1
-
-        x = 0
-
-        data_fig.add_trace(go.Scatter(x=output_df.index, y=output_df[output_df.columns[x]].values,
-                                      name=output_df.columns[x],
-                                      mode='lines'),
-                           row=i,
-                           col=j)
-
-        # Display the container of plots
-        data_fig.update_layout(height=1200, width=1200)
-        data_fig.show()
-
-
 
 def extract_data(trial):
     """Load the dataset to a DataLoader and visualize the data being collected."""
     # Suggest a batch size
-    batch_size = trial.suggest_int('batch_size', 20, 400)
+    batch_size = trial.suggest_int('batch_size', 10, 100)
 
     # Two data loaders are created; one for training and the other for evaluation
     train_loader = DataLoader(data, batch_size=batch_size)
@@ -146,13 +89,13 @@ def extract_data(trial):
 
 
 def define_model(trial):
-    """Construct the model while optimizing the number of layers, hidden units and dropout ratio."""
+    """Construct the model while optimizing the number of layers, hidden units and dropout rate."""
     # Configurations for the model, some of them suggested and others from CLI arguments
-    n_layers = trial.suggest_int('n_layers', 2, 10)
+    n_layers = trial.suggest_int('n_layers', 2, 5)
     input_size = len(sys.argv[2].split(','))
     proj_size = int(sys.argv[5])
-    dropout = trial.suggest_float('dropout', 0.2, 0.5)
-    hidden_size = trial.suggest_int('hidden_size', proj_size + 1, 512)
+    dropout = trial.suggest_float('dropout', 0.1, 0.5)
+    hidden_size = trial.suggest_int('hidden_size', proj_size + 1, 2048)
 
     # Return the entire model
     return nn.LSTM(input_size=input_size, hidden_size=hidden_size, num_layers=n_layers, batch_first=True,
@@ -182,19 +125,25 @@ def objective(trial):
             "Rprop",
         ],
     )
-    lr = trial.suggest_float("lr", 1e-5, 1, log=True)
+    lr = trial.suggest_float("lr", 1e-5, 1e-2, log=True)
     optimizer = getattr(optim, optimizer_name)(model.parameters(), lr=lr)
 
-    # Get the dataset and batch size.
+    # Get the dataset and batch size. 80-20 split for training and testing
     train_loader, valid_loader, batch_size = extract_data(trial)
-    test_batches = trial.suggest_int('test_batches', 1, 10)
+    batches = len(train_loader.dataset) // batch_size
+    test_batches = batches // 5
 
     # Training of the model.
-    for epoch in range(EPOCHS):
+    for _ in range(int(sys.argv[7])):
 
         # Put the model in training mode
         model.train()
-        num_train_batches = len(train_loader.dataset) // batch_size - test_batches
+        num_train_batches = batches - test_batches
+
+        # This is in case the batch size is large relative to the dataset, leaving no room for the test batches.
+        if test_batches == 0:
+            num_train_batches = batches - 1
+            test_batches = 1
 
         # Iteratively take batches of data and put them into the model
         for batch_idx, (x, y) in enumerate(train_loader):
@@ -259,42 +208,23 @@ def objective(trial):
         # Compute the MSE which will be the value the study minimizes through different suggestions of hyperparameters
         mse = sqerror / eval_entries
 
-        trial.report(mse, epoch)
-
         # Handle pruning based on the intermediate value.
         if trial.should_prune():
             raise optuna.exceptions.TrialPruned()
 
     return mse
 
-
 if __name__ == "__main__":
     # Create a Dataset to collect the data, visualize the data, and set up the inputs and outputs to train the LSTM
     data = Dataset()
-    data.visualize()
 
-    # Activation of the study, aiming to minimize AMSE
+    # Activation of the study, aiming to minimize MSE
     study = optuna.create_study(direction="minimize")
-    study.optimize(objective, n_trials=10000, timeout=120)
+    study.optimize(objective, n_trials=int(sys.argv[6]))
 
-    # Evaluation of the study
-    pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
-    complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
+    with open('experiment/best_values.pickle', 'wb') as f:
+        # Use pickle to dump the dictionary into the file
+        pickle.dump(study.best_trial, f)
 
-    print("Study statistics: ")
-    print("  Number of finished trials: ", len(study.trials))
-    print("  Number of pruned trials: ", len(pruned_trials))
-    print("  Number of complete trials: ", len(complete_trials))
-
-    print("Best trial:")
-    trial = study.best_trial
-
-    print("  Value: ", trial.value)
-
-    print("  Params: ")
-    for key, value in trial.params.items():
-        print("    {}: {}".format(key, value))
-
-    # Visualization
-    vis.plot_param_importances(study).show()
-    vis.plot_contour(study).show()
+    with open('experiment/number_of_samples.pickle', 'wb') as f:
+        pickle.dump(len(data), f)
