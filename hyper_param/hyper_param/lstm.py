@@ -24,19 +24,22 @@ import sys
 # And if using the gpu, raise the number of epochs
 DEVICE = torch.device("cpu")
 
+
 class Dataset(Dataset):
     """Build the dataset based on a csv file of data."""
+
     # Dataframes are fields shared amongst functions
     input_df = None
     output_df = None
+
     def __init__(self):
         """Create the instance of the Dataset, initializing the input and the target output"""
 
         # Create pandas dataframes from a csv file and set up the input and output dataframes based on CLI arguments
         orig_df = pd.read_csv(sys.argv[1])
         print(orig_df)
-        input_keys = map(str, sys.argv[2].strip('[]').split(','))
-        output_key = map(str, sys.argv[3].strip('[]').split(','))
+        input_keys = map(str, sys.argv[2].strip("[]").split(","))
+        output_key = map(str, sys.argv[3].strip("[]").split(","))
         self.input_df = orig_df[input_keys]
         self.output_df = orig_df[output_key]
 
@@ -52,7 +55,7 @@ class Dataset(Dataset):
         output_seq_length = int(sys.argv[5])
 
         for i in range(input_seq_length, input_np.shape[0] - output_seq_length):
-            input_data.append(input_np[i - input_seq_length:i, :])
+            input_data.append(input_np[i - input_seq_length : i, :])
             for j in range(output_seq_length):
                 if i + j < output_np.shape[0]:
                     projection.append(output_np[i + j, 0])
@@ -80,7 +83,7 @@ class Dataset(Dataset):
 def extract_data(trial):
     """Load the dataset to a DataLoader and visualize the data being collected."""
     # Suggest a batch size
-    batch_size = trial.suggest_int('batch_size', 10, 100)
+    batch_size = trial.suggest_int("batch_size", 10, 100)
 
     # Two data loaders are created; one for training and the other for evaluation
     train_loader = DataLoader(data, batch_size=batch_size)
@@ -92,15 +95,21 @@ def extract_data(trial):
 def define_model(trial):
     """Construct the model while optimizing the number of layers, hidden units and dropout rate."""
     # Configurations for the model, some of them suggested and others from CLI arguments
-    n_layers = trial.suggest_int('n_layers', 2, 5)
-    input_size = len(sys.argv[2].split(','))
+    n_layers = trial.suggest_int("n_layers", 2, 5)
+    input_size = len(sys.argv[2].split(","))
     proj_size = int(sys.argv[5])
-    dropout = trial.suggest_float('dropout', 0.1, 0.5)
-    hidden_size = trial.suggest_int('hidden_size', proj_size + 1, 2048)
+    dropout = trial.suggest_float("dropout", 0.1, 0.5)
+    hidden_size = trial.suggest_int("hidden_size", proj_size + 1, 2048)
 
     # Return the entire model
-    return nn.LSTM(input_size=input_size, hidden_size=hidden_size, num_layers=n_layers, batch_first=True,
-                   dropout=dropout, proj_size=proj_size)
+    return nn.LSTM(
+        input_size=input_size,
+        hidden_size=hidden_size,
+        num_layers=n_layers,
+        batch_first=True,
+        dropout=dropout,
+        proj_size=proj_size,
+    )
 
 
 def objective(trial):
@@ -165,7 +174,11 @@ def objective(trial):
             output = model(x)[1][0]
 
             # Match the shape of the output from the model to the shape of the targets
-            y = y.unsqueeze(0).expand(output.shape[0], y.shape[0], y.shape[1]).to(DEVICE)
+            y = (
+                y.unsqueeze(0)
+                .expand(output.shape[0], y.shape[0], y.shape[1])
+                .to(DEVICE)
+            )
 
             # Calculate the loss
             optimizer.zero_grad()
@@ -196,7 +209,11 @@ def objective(trial):
                     output = model(x)[1][0]
 
                     # Match the shape of the output from the model to the shape of the targets
-                    y = y.unsqueeze(0).expand(output.shape[0], y.shape[0], y.shape[1]).to(DEVICE)
+                    y = (
+                        y.unsqueeze(0)
+                        .expand(output.shape[0], y.shape[0], y.shape[1])
+                        .to(DEVICE)
+                    )
 
                     # Add the error
                     loss_fn = nn.MSELoss()
@@ -215,6 +232,7 @@ def objective(trial):
 
     return mse
 
+
 if __name__ == "__main__":
     # Create a Dataset to collect the data, visualize the data, and set up the inputs and outputs to train the LSTM
     data = Dataset()
@@ -223,6 +241,6 @@ if __name__ == "__main__":
     study = optuna.create_study(direction="minimize")
     study.optimize(objective, n_trials=int(sys.argv[6]))
 
-    with open('experiment/best_values.pickle', 'wb') as f:
+    with open("experiment/best_values.pickle", "wb") as f:
         # Use pickle to dump the dictionary of the trial into the file
         pickle.dump(study.best_trial, f)
