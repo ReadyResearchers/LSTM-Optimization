@@ -35,9 +35,9 @@ if __name__ == "__main__":
 
     for e in epochs:
         program = "hyper_param/lstm.py"
-        csv = "data/city_temperature_compressed.csv"
-        input = "[Year,Month,Day]"
-        output = "[AvgTemperature]"
+        csv = "data/delhi_weather_data.csv"
+        input = "[year,month,day,humidity,wind_speed,meanpressure]"
+        output = "[meantemp]"
         control_time_steps = 10
         control_projection_size = 10
         control_trials = 50
@@ -80,9 +80,9 @@ if __name__ == "__main__":
 
     for t in time_steps:
         program = "hyper_param/lstm.py"
-        csv = "data/city_temperature_compressed.csv"
-        input = "[Year,Month,Day]"
-        output = "[AvgTemperature]"
+        csv = "data/delhi_weather_data.csv"
+        input = "[year,month,day,humidity,wind_speed,meanpressure]"
+        output = "[meantemp]"
         test_time_steps = t
         control_projection_size = 10
         control_trials = 50
@@ -125,9 +125,9 @@ if __name__ == "__main__":
 
     for p in projection_size:
         program = "hyper_param/lstm.py"
-        csv = "data/city_temperature_compressed.csv"
-        input = "[Year,Month,Day]"
-        output = "[AvgTemperature]"
+        csv = "data/delhi_weather_data.csv"
+        input = "[year,month,day,humidity,wind_speed,meanpressure]"
+        output = "[meantemp]"
         control_time_steps = 10
         test_projection_size = p
         control_trials = 50
@@ -169,9 +169,9 @@ if __name__ == "__main__":
 
     for t in trials:
         program = "hyper_param/lstm.py"
-        csv = "data/city_temperature_compressed.csv"
-        input = "[Year,Month,Day]"
-        output = "[AvgTemperature]"
+        csv = "data/delhi_weather_data.csv"
+        input = "[year,month,day,humidity,wind_speed,meanpressure]"
+        output = "[meantemp]"
         control_time_steps = 10
         control_projection_size = 10
         test_trials = t
@@ -210,7 +210,8 @@ if __name__ == "__main__":
     data_fig.add_trace(trace_dropout, row=4, col=1)
     data_fig.add_trace(trace_hidden_size, row=4, col=1)
 
-    data_fig.update_layout(height=1200, width=1200, title="Hyperparameter Trends with Low Features, Medium Seasonality")
+    data_fig.update_layout(height=1200, width=1200, title="Hyperparameter Trends with Medium Features, "
+                                                          "High Seasonality")
     data_fig.update_xaxes(title_text="Epochs", row=1, col=1)
     data_fig.update_xaxes(title_text="Input Time Steps", row=2, col=1)
     data_fig.update_xaxes(title_text="Output Time Steps", row=3, col=1)
