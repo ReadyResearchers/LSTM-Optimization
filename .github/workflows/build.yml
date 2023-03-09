@@ -61,9 +61,8 @@ jobs:
           if: always()
           run: |
             cd hyper_param
-            poetry run pytest
-            coverage run -m pytest
-            coverage xml
+            poetry run coverage run -m pytest
+            poetry run coverage xml
         # Upload Coverage
         - name: Upload coverage reports to Codecov
           uses: codecov/codecov-action@v3
