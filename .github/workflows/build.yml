@@ -62,11 +62,15 @@ jobs:
           run: |
             cd hyper_param
             poetry run pytest
+            coverage run -m pytest
+            coverage xml
         # Upload Coverage
         - name: Upload coverage reports to Codecov
           uses: codecov/codecov-action@v3
           with:
             token: ${{ secrets.CODECOV_TOKEN }}
+            name: coverage-report
+            path: coverage.xml
         # Run the black code formatter in checking mode
         - name: Run Black Code Formatter
           if: always()

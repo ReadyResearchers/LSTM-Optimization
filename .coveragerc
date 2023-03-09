@@ -1,0 +1,10 @@
+[run]
+omit =
+    hyper_param/*
+    images/*
+
+include=
+    hyper_param/hyper_param/*
+    hyper_param/experiment/__main__.py
+    hyper_param/experiment/best_values.pickle
+
