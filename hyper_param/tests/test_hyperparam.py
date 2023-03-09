@@ -1,11 +1,8 @@
 """Test the artifact's source code"""
 
-import os
-import subprocess
-import sys
+import runpy
 
 
 def test_experiment():
     """Make sure the whole script works as intended"""
-    subprocess.call([sys.executable, "-m", "__main__"])
-    os.system("{} -m __main__".format(sys.executable))
+    runpy.run_path("experiment/__main__.py", run_name="__main__")
