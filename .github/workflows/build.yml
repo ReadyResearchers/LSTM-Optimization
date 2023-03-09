@@ -33,7 +33,7 @@ jobs:
           uses: actionshub/markdownlint@main
         # Setup Python for the current language version
         - name: Setup Python ${{ matrix.python-version }}
-          uses: actions/setup-python@v1
+          uses: actions/setup-python@v4.5.0
           with:
             python-version: ${{ matrix.python-version }}
         # Install pip
