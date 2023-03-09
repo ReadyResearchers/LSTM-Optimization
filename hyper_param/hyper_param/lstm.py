@@ -223,8 +223,5 @@ if __name__ == "__main__":
     study.optimize(objective, n_trials=int(sys.argv[6]))
 
     with open('experiment/best_values.pickle', 'wb') as f:
-        # Use pickle to dump the dictionary into the file
+        # Use pickle to dump the dictionary of the trial into the file
         pickle.dump(study.best_trial, f)
-
-    with open('experiment/number_of_samples.pickle', 'wb') as f:
-        pickle.dump(len(data), f)
