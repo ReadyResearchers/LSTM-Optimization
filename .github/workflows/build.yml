@@ -27,6 +27,15 @@ jobs:
           uses: actions/checkout@v2
           with:
             fetch-depth: 0
+        # Enable the reading of large files
+        - name: Install Git LFS
+          run: |
+            sudo apt-get update
+            sudo apt-get install git-lfs
+            git lfs install
+        - name: Download LFS files
+          run: |
+            git lfs pull
         # Run the mdl linting tool
         # Refers to .mdlrc file in repository
         - name: Run Markdown Linting
