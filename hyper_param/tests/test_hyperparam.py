@@ -13,4 +13,4 @@ def test_objective():
 
 def test_experiment():
     """Make sure the whole script works as intended"""
-    os.system("python experiment/experiment.py")
+    os.system("python experiment/__main__.py")

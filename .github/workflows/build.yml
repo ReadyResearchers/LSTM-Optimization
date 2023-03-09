@@ -55,7 +55,7 @@ jobs:
           run: |
             cd hyper_param
             poetry install
-            poetry run python hyper_param
+            poetry run python experiment
         # Run the pytest test suite
         - name: Run Pytest Test Suite
           if: always()
