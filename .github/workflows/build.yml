@@ -64,7 +64,7 @@ jobs:
           run: |
             cd hyper_param
             poetry install
-            poetry run python experiment
+            poetry run python hyper_param/lstm.py data/city_temperature_compressed.csv [Year,Month,Day] [AvgTemperature] 10 10 50 10
         # Run the pytest test suite
         - name: Run Pytest Test Suite
           if: always()
