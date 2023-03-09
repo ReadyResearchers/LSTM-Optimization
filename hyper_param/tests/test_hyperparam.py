@@ -1,7 +1,7 @@
 """Test the artifact's source code"""
 
 import runpy
-from experiment import __main__
+import experiment  # noqa: F401
 
 
 def test_experiment():
