@@ -22,7 +22,7 @@ import sys
 
 # For performance reasons, if using the cpu, lower the number of epochs
 # And if using the gpu, raise the number of epochs
-DEVICE = torch.device("cuda")
+DEVICE = torch.device("cpu")
 
 class Dataset(Dataset):
     """Build the dataset based on a csv file of data."""
