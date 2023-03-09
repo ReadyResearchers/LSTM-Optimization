@@ -1,6 +1,7 @@
 """Test the artifact's source code"""
 
 import runpy
+from experiment import __main__
 
 
 def test_experiment():
