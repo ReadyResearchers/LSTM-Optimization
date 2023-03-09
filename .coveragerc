@@ -1,8 +1,4 @@
 [run]
-omit =
-    hyper_param/*
-    images/*
-
 include=
     hyper_param/hyper_param/lstm.py
     hyper_param/experiment/__main__.py
