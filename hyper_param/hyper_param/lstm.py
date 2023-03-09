@@ -34,6 +34,7 @@ class Dataset(Dataset):
 
         # Create pandas dataframes from a csv file and set up the input and output dataframes based on CLI arguments
         orig_df = pd.read_csv(sys.argv[1])
+        print(orig_df)
         input_keys = map(str, sys.argv[2].strip('[]').split(','))
         output_key = map(str, sys.argv[3].strip('[]').split(','))
         self.input_df = orig_df[input_keys]
