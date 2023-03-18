@@ -2,9 +2,8 @@ library(forecast)
 library(clock)
 library(dplyr)
 
-data <- read.csv("../data/electricity_panama.csv", header=TRUE)
+data <- read.csv("../data/electricity_panama_original.csv", header=TRUE)
 data <- na.omit(data)
-data <- slice(data, 1:10000)
 data <- mutate(data, datetime = date_time_parse(datetime, format = "%d-%m-%Y %H:%M", zone = "UTC"))
 data <- mutate(data, year = get_year(datetime), month = get_month(datetime),
                day = get_day(datetime), hour = get_hour(datetime))
