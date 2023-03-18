@@ -12,16 +12,16 @@
 * [Technical Details](#technical-details)
 * [Data Analysis](#data-analysis)
 * [Reproducibility Details](#reproducibility-details)
-  * [Python](#python)
-  * [CPU](#cpu)
-  * [GPU](#gpu)
+ * [Python](#python)
+ * [CPU](#cpu)
+ * [GPU](#gpu)
 * [Related Works](#related-works)
 * [Future Endeavors](#future-endeavors)
 
-
 ## Title of Senior Thesis
 
-Digital Prophet: Predictive Analytics of Time Series Datasets Using Hyperparameter Optimization
+Digital Prophet: Predictive Analytics of Time Series Datasets Using
+Hyperparameter Optimization
 
 ## Introduction
 
@@ -61,13 +61,13 @@ In this application of hyperparameter optimization, I analyze multiple time seri
 datasets in a csv format and then for each dataset run through trials to come up
 with the most optimal hyperparameter values within a certain range.
 
-First, `optuna` creates a study that stores all of the trials and their results.
+First, `optuna` creates a study that stores all the trials and their results.
 
 At the beginning of a trial run, a model for the neural network is created.
 
 The number of layers and the number of neurons in each layer are decided by the
-`suggest_<data_type>` function, which creates a hyperparameter and chooses the value of
-that hyperparameter based on potential.
+`suggest_<data_type>` function, which creates a hyperparameter and chooses
+the value of that hyperparameter based on potential.
 
 The optimizer is another hyperparameter which value is chosen through the
 `suggest_categorical` function.
@@ -100,7 +100,7 @@ experiment directory has an analysis directory that holds all the R scripts.
 
 There are two primary ways to run the program. One way is to directly run
 LSTM-OP, and another way is to run the experiment which run LSTM-OP many times.
-There are also different mechanisms of execution depending on whether the 
+There are also different mechanisms of execution depending on whether the
 CPU or GPU is used.
 
 ### Python
@@ -112,7 +112,7 @@ it's recognized.
 
 ### CPU
 
-#### Experiment
+#### Experiment for CPU
 
 In the "lstm.py" file, there is a final variable called `DEVICE`. Make sure
 that the string inside the device says `cpu`, not `cuda`. Once the latest
@@ -120,11 +120,11 @@ version of Poetry is installed, navigate to the root of the repository and then
 to a directory called "hyper_param". When inside the directory, enter the
 following command: `poetry run python experiment`.
 
-#### Direct
+#### Direct for CPU
 
 Running LSTM-OP without using the script is slightly different. It's similar
 to the previous command, but there needs to be additional arguments. An
-example of a command you would run is the following: `poetry run python 
+example of a command you would run is the following: `poetry run python
 hyper_param/lstm.py data/city_temperature_compressed.csv [Year,Month,Day]
 [AvgTemperature] 10 10 50 10`. Command line arguments are as follows: file
 path of the dataset, list of input features, output feature, amount of input
@@ -132,7 +132,7 @@ time steps, amount of output time steps, number of trials, and number of epochs.
 
 ### GPU
 
-#### Experiment
+#### Experiment for GPU
 
 In the `lstm.py` file, there is a final variable called `DEVICE`. Make
 sure that the string inside the device says `cuda`, not `cpu`. Once a CUDA
@@ -148,7 +148,7 @@ navigate to the root of the repository and then to a directory called
 `hyper_param`. When inside the directory, enter the following command:
 `python experiment/__main__.py`.
 
-#### Direct
+#### Direct for GPU
 
 Running LSTM-OP without using the script is slightly different. It's
 similar to the previous command, but there needs to be additional
