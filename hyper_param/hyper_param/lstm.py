@@ -1,13 +1,7 @@
 """
 Optuna example that optimizes LSTM hyperparameters using PyTorch.
-In this example, we optimize the projection accuracy of a stock called Britannica using
-PyTorch and a csv file containing the stock data. We optimize the neural network architecture as well as the optimizer
-configuration. As it is too time-consuming to use the whole file,
-we here use one small batch of it at a time.
 
 Source Code Credit: https://github.com/optuna/optuna-examples/blob/main/pytorch/pytorch_simple.py
-Stock Market Data Credit: https://www.kaggle.com/code/jagannathrk/stock-market-time-series/data?select=BRITANNIA.csv
-Temperature Data Credit: https://www.kaggle.com/datasets/sudalairajkumar/daily-temperature-of-major-cities?resource=download
 """
 
 import optuna
@@ -22,7 +16,7 @@ import sys
 
 # For performance reasons, if using the cpu, lower the number of epochs
 # And if using the gpu, raise the number of epochs
-DEVICE = torch.device("cpu")
+DEVICE = torch.device("cuda")
 
 
 class Dataset(Dataset):
@@ -238,8 +232,18 @@ if __name__ == "__main__":
 
     # Activation of the study, aiming to minimize MSE
     study = optuna.create_study(direction="minimize")
-    study.optimize(objective, n_trials=int(sys.argv[6]), timeout=10)
+    study.optimize(objective, n_trials=int(sys.argv[6]))
 
     with open("experiment/best_values.pickle", "wb") as f:
         # Use pickle to dump the dictionary of the trial into the file
         pickle.dump(study.best_trial, f)
+
+    # Display information about the best trial
+    print("Best trial:")
+    trial = study.best_trial
+
+    print("  MSE: ", trial.value)
+
+    print("  Params: ")
+    for key, value in trial.params.items():
+        print("    {}: {}".format(key, value))
