@@ -16,7 +16,7 @@ import sys
 
 # For performance reasons, if using the cpu, lower the number of epochs
 # And if using the gpu, raise the number of epochs
-DEVICE = torch.device("cuda")
+DEVICE = torch.device("cpu")
 
 
 class Dataset(Dataset):
@@ -232,7 +232,7 @@ if __name__ == "__main__":
 
     # Activation of the study, aiming to minimize MSE
     study = optuna.create_study(direction="minimize")
-    study.optimize(objective, n_trials=int(sys.argv[6]))
+    study.optimize(objective, n_trials=int(sys.argv[6]), timeout=10)
 
     with open("experiment/best_values.pickle", "wb") as f:
         # Use pickle to dump the dictionary of the trial into the file
