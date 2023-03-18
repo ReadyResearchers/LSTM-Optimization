@@ -12,9 +12,6 @@
 * [Technical Details](#technical-details)
 * [Data Analysis](#data-analysis)
 * [Reproducibility Details](#reproducibility-details)
-  - [Python](#python)
-  - [CPU](#cpu)
-  - [GPU](#gpu)
 * [Related Works](#related-works)
 * [Future Endeavors](#future-endeavors)
 
