@@ -56,8 +56,8 @@ mean square error and the hyperparameter values chosen for that trial.
 In the data directory, there are quite a few files. For each dataset, the
 seasonality strength had to be verified, so I created a series of
 autocorrelation functions through the use of R scripts. The datasets,
-plots, and the experiment results are all in the data directory. The
-experiment directory has an analysis directory that holds all the R scripts.
+plots, and the experiment results are all in the `data` directory. The
+`experiment` directory has an `analysis` directory that holds all the R scripts.
 
 ## Reproducibility Details
 
@@ -77,10 +77,10 @@ it's recognized.
 
 #### Experiment for CPU
 
-In the "lstm.py" file, there is a final variable called `DEVICE`. Make sure
+In the `lstm.py` file, there is a final variable called `DEVICE`. Make sure
 that the string inside the device says `cpu`, not `cuda`. Once the latest
 version of Poetry is installed, navigate to the root of the repository and then
-to a directory called "hyper_param". When inside the directory, enter the
+to a directory called `hyper_param`. When inside the directory, enter the
 following command: `poetry run python experiment`.
 
 #### Direct Execution for CPU
